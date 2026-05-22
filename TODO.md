@@ -1,0 +1,13 @@
+# count-sleeps TODO
+- [ ] T001: src/popup.ts に popup骨格(イベント一覧 + 残り日数大表示)を構築
+- [ ] T1B: 保存は src/storage.ts の store(get/set/remove)経由に統一し、状態・ロジックは src/core/ に chrome.*/DOM 非依存で分離する(将来PWA移植のため)
+- [ ] T002: イベントCRUD(名前/絵文字/日付)を chrome.storage.local に保存・読込
+- [ ] T003: 今日からの残り日数(ねる回数)を計算し大きく表示
+- [ ] T004: 当日「きょうだよ!」演出、過去日は完了表示
+- [ ] T005: 複数イベントを近い順に一覧表示
+- [ ] T006: 起動時に storage.local から全状態を復元
+- [ ] T007: _locales ja/en を chrome.i18n で全UIに適用
+- [ ] T008: Premiumゲート(7日トライアル + Stripe Checkout URL)。無料はイベント3つ、Premiumで無制限+背景テーマ
+- [ ] T009: npm run build を通し ts/lint を解消
+- [ ] T010: release/count-sleeps.zip 生成(node_modules除外)
+- [ ] T011: legal/PRIVACY.md と TERMS.md 作成(外部通信なし・データ収集なし・医療効果を主張しない)
