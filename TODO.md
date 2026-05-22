@@ -6,7 +6,7 @@
 - [x] T004: 当日「きょうだよ!」演出、過去日は完了表示
 - [x] T005: 複数イベントを近い順に一覧表示
 - [x] T006: 起動時に storage.local から全状態を復元
-- [ ] T007: _locales ja/en を chrome.i18n で全UIに適用
+- [x] T007: _locales ja/en を chrome.i18n で全UIに適用
 - [ ] T008: Premiumゲート(7日トライアル + Stripe Checkout URL)。無料はイベント3つ、Premiumで無制限+背景テーマ
 - [ ] T009: npm run build を通し ts/lint を解消
 - [ ] T010: release/count-sleeps.zip 生成(node_modules除外)

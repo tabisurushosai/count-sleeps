@@ -8,7 +8,12 @@ import {
   type CountSleepEventInput,
 } from "./core/appState";
 import { loadAppState, saveAppState } from "./core/appPersistence";
-import { createPopupModel, type EventSummary, type PopupModel } from "./core/popupModel";
+import {
+  createPopupModel,
+  type EventSummary,
+  type PopupModel,
+  type PopupModelLabels,
+} from "./core/popupModel";
 import { store } from "./storage";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -23,10 +28,31 @@ interface UiState {
   editingEventId: string | null;
 }
 
+interface UiMessages {
+  popupModel: PopupModelLabels;
+  emojiLabel: string;
+  nameLabel: string;
+  namePlaceholder: string;
+  dateLabel: string;
+  cancelButton: string;
+  updateButton: string;
+  addButton: string;
+  featuredFallbackLabel: string;
+  featuredFallbackName: string;
+  eventsHeading: string;
+  emptyEvents: string;
+  editButton: string;
+  deleteButton: string;
+}
+
+const uiMessages = createUiMessages();
+
 let appState: AppState = createInitialAppState();
 let uiState: UiState = {
   editingEventId: null,
 };
+
+document.title = uiMessages.popupModel.title;
 
 function renderPopup(root: HTMLElement, popupModel: PopupModel, currentUiState: UiState): void {
   root.replaceChildren();
@@ -37,6 +63,39 @@ function renderPopup(root: HTMLElement, popupModel: PopupModel, currentUiState: 
     createFeatured(popupModel.featuredEvent),
     createEventList(popupModel.events),
   );
+}
+
+function createUiMessages(): UiMessages {
+  return {
+    popupModel: {
+      title: message("extName"),
+      todayStatus: message("statusToday"),
+      pastStatus: message("statusPast"),
+      unknownStatus: message("statusUnknown"),
+      upcomingStatus: message("statusUpcoming"),
+      todaySleeps: message("sleepsToday"),
+      pastSleeps: message("sleepsPast"),
+      unknownSleeps: message("sleepsUnknown"),
+      sleepsCount: (sleeps) => message("sleepsCount", String(sleeps)),
+    },
+    emojiLabel: message("emojiLabel"),
+    nameLabel: message("nameLabel"),
+    namePlaceholder: message("namePlaceholder"),
+    dateLabel: message("dateLabel"),
+    cancelButton: message("cancelButton"),
+    updateButton: message("updateButton"),
+    addButton: message("addButton"),
+    featuredFallbackLabel: message("featuredFallbackLabel"),
+    featuredFallbackName: message("featuredFallbackName"),
+    eventsHeading: message("eventsHeading"),
+    emptyEvents: message("emptyEvents"),
+    editButton: message("editButton"),
+    deleteButton: message("deleteButton"),
+  };
+}
+
+function message(name: string, substitutions?: string | string[]): string {
+  return chrome.i18n.getMessage(name, substitutions) || name;
 }
 
 function createStyle(): HTMLStyleElement {
@@ -305,21 +364,21 @@ function createEventForm(state: AppState, currentUiState: UiState): HTMLElement 
   const row = document.createElement("div");
   row.className = "event-form__row";
 
-  const emojiLabel = createFormLabel("絵文字");
+  const emojiLabel = createFormLabel(uiMessages.emojiLabel);
   const emojiInput = createInput("text", "emoji", "📅");
   emojiInput.maxLength = 4;
   emojiInput.value = editingEvent?.emoji ?? "";
   emojiLabel.append(emojiInput);
 
-  const nameLabel = createFormLabel("名前");
-  const nameInput = createInput("text", "name", "たのしみな予定");
+  const nameLabel = createFormLabel(uiMessages.nameLabel);
+  const nameInput = createInput("text", "name", uiMessages.namePlaceholder);
   nameInput.required = true;
   nameInput.value = editingEvent?.name ?? "";
   nameLabel.append(nameInput);
 
   row.append(emojiLabel, nameLabel);
 
-  const dateLabel = createFormLabel("日付");
+  const dateLabel = createFormLabel(uiMessages.dateLabel);
   const dateInput = createInput("date", "targetDate", "");
   dateInput.required = true;
   dateInput.value = editingEvent?.targetDate ?? "";
@@ -332,7 +391,7 @@ function createEventForm(state: AppState, currentUiState: UiState): HTMLElement 
     const cancelButton = document.createElement("button");
     cancelButton.className = "button";
     cancelButton.type = "button";
-    cancelButton.textContent = "キャンセル";
+    cancelButton.textContent = uiMessages.cancelButton;
     cancelButton.addEventListener("click", () => {
       uiState = { editingEventId: null };
       render();
@@ -343,7 +402,7 @@ function createEventForm(state: AppState, currentUiState: UiState): HTMLElement 
   const submitButton = document.createElement("button");
   submitButton.className = "button button--primary";
   submitButton.type = "submit";
-  submitButton.textContent = editingEvent ? "更新" : "追加";
+  submitButton.textContent = editingEvent ? uiMessages.updateButton : uiMessages.addButton;
   actions.append(submitButton);
 
   form.append(row, dateLabel, actions);
@@ -380,15 +439,15 @@ function createFeatured(event: EventSummary | null): HTMLElement {
 
   const label = document.createElement("p");
   label.className = "featured__label";
-  label.textContent = event ? event.statusLabel : "いちばん近い予定";
+  label.textContent = event ? event.statusLabel : uiMessages.featuredFallbackLabel;
 
   const count = document.createElement("p");
   count.className = "featured__count";
-  count.textContent = event ? event.sleepsLabel : "-- ねる";
+  count.textContent = event ? event.sleepsLabel : uiMessages.popupModel.unknownSleeps;
 
   const name = document.createElement("p");
   name.className = "featured__name";
-  name.textContent = event ? `${event.emoji} ${event.name}` : "予定を追加すると、ここに大きく表示されます";
+  name.textContent = event ? `${event.emoji} ${event.name}` : uiMessages.featuredFallbackName;
 
   section.append(label, count, name);
   return section;
@@ -399,7 +458,7 @@ function createEventList(events: EventSummary[]): HTMLElement {
 
   const heading = document.createElement("h2");
   heading.className = "section-title";
-  heading.textContent = "イベント一覧";
+  heading.textContent = uiMessages.eventsHeading;
 
   const list = document.createElement("ul");
   list.className = "event-list";
@@ -407,7 +466,7 @@ function createEventList(events: EventSummary[]): HTMLElement {
   if (events.length === 0) {
     const empty = document.createElement("li");
     empty.className = "empty-state";
-    empty.textContent = "まだイベントがありません";
+    empty.textContent = uiMessages.emptyEvents;
     list.append(empty);
   } else {
     list.append(...events.map(createEventItem));
@@ -448,7 +507,7 @@ function createEventItem(event: EventSummary): HTMLLIElement {
   const editButton = document.createElement("button");
   editButton.className = "event-item__button";
   editButton.type = "button";
-  editButton.textContent = "編集";
+  editButton.textContent = uiMessages.editButton;
   editButton.addEventListener("click", () => {
     uiState = { editingEventId: event.id };
     render();
@@ -457,7 +516,7 @@ function createEventItem(event: EventSummary): HTMLLIElement {
   const deleteButton = document.createElement("button");
   deleteButton.className = "event-item__button";
   deleteButton.type = "button";
-  deleteButton.textContent = "削除";
+  deleteButton.textContent = uiMessages.deleteButton;
   deleteButton.addEventListener("click", () => {
     void deleteEvent(event.id);
   });
@@ -499,7 +558,7 @@ function createEventId(): string {
 }
 
 function render(): void {
-  renderPopup(root, createPopupModel(appState), uiState);
+  renderPopup(root, createPopupModel(appState, uiMessages.popupModel), uiState);
 }
 
 async function start(): Promise<void> {

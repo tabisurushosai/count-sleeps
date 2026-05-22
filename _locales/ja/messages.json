@@ -1,1 +1,76 @@
-{ "extName": { "message": "あとなんねる" }, "extDesc": { "message": "楽しみな日まで「あと何回ねる」かを大きく表示。見通しが立ちにくい子の不安をやわらげる。" } }
+{
+  "extName": {
+    "message": "あとなんねる"
+  },
+  "extDesc": {
+    "message": "楽しみな日まで「あと何回ねる」かを大きく表示。見通しが立ちにくい子の不安をやわらげる。"
+  },
+  "statusToday": {
+    "message": "きょう"
+  },
+  "statusPast": {
+    "message": "完了"
+  },
+  "statusUnknown": {
+    "message": "日付未確認"
+  },
+  "statusUpcoming": {
+    "message": "これから"
+  },
+  "sleepsToday": {
+    "message": "きょうだよ!"
+  },
+  "sleepsPast": {
+    "message": "完了"
+  },
+  "sleepsUnknown": {
+    "message": "-- ねる"
+  },
+  "sleepsCount": {
+    "message": "$COUNT$ ねる",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "emojiLabel": {
+    "message": "絵文字"
+  },
+  "nameLabel": {
+    "message": "名前"
+  },
+  "namePlaceholder": {
+    "message": "たのしみな予定"
+  },
+  "dateLabel": {
+    "message": "日付"
+  },
+  "cancelButton": {
+    "message": "キャンセル"
+  },
+  "updateButton": {
+    "message": "更新"
+  },
+  "addButton": {
+    "message": "追加"
+  },
+  "featuredFallbackLabel": {
+    "message": "いちばん近い予定"
+  },
+  "featuredFallbackName": {
+    "message": "予定を追加すると、ここに大きく表示されます"
+  },
+  "eventsHeading": {
+    "message": "イベント一覧"
+  },
+  "emptyEvents": {
+    "message": "まだイベントがありません"
+  },
+  "editButton": {
+    "message": "編集"
+  },
+  "deleteButton": {
+    "message": "削除"
+  }
+}

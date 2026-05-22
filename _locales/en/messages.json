@@ -1,1 +1,76 @@
-{ "extName": { "message": "Sleeps Left" }, "extDesc": { "message": "Show how many sleeps are left until a special day. Eases anxiety for kids who need a clear countdown." } }
+{
+  "extName": {
+    "message": "Sleeps Left"
+  },
+  "extDesc": {
+    "message": "Show how many sleeps are left until a special day. Eases anxiety for kids who need a clear countdown."
+  },
+  "statusToday": {
+    "message": "Today"
+  },
+  "statusPast": {
+    "message": "Done"
+  },
+  "statusUnknown": {
+    "message": "Date unchecked"
+  },
+  "statusUpcoming": {
+    "message": "Upcoming"
+  },
+  "sleepsToday": {
+    "message": "It's today!"
+  },
+  "sleepsPast": {
+    "message": "Done"
+  },
+  "sleepsUnknown": {
+    "message": "-- sleeps"
+  },
+  "sleepsCount": {
+    "message": "$COUNT$ sleeps",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "emojiLabel": {
+    "message": "Emoji"
+  },
+  "nameLabel": {
+    "message": "Name"
+  },
+  "namePlaceholder": {
+    "message": "Fun plan"
+  },
+  "dateLabel": {
+    "message": "Date"
+  },
+  "cancelButton": {
+    "message": "Cancel"
+  },
+  "updateButton": {
+    "message": "Update"
+  },
+  "addButton": {
+    "message": "Add"
+  },
+  "featuredFallbackLabel": {
+    "message": "Closest event"
+  },
+  "featuredFallbackName": {
+    "message": "Add an event to show it here"
+  },
+  "eventsHeading": {
+    "message": "Events"
+  },
+  "emptyEvents": {
+    "message": "No events yet"
+  },
+  "editButton": {
+    "message": "Edit"
+  },
+  "deleteButton": {
+    "message": "Delete"
+  }
+}

@@ -20,24 +20,40 @@ export interface PopupModel {
   events: EventSummary[];
 }
 
-export function createPopupModel(state: AppState, today: Date = new Date()): PopupModel {
+export interface PopupModelLabels {
+  title: string;
+  todayStatus: string;
+  pastStatus: string;
+  unknownStatus: string;
+  upcomingStatus: string;
+  todaySleeps: string;
+  pastSleeps: string;
+  unknownSleeps: string;
+  sleepsCount: (sleeps: number) => string;
+}
+
+export function createPopupModel(
+  state: AppState,
+  labels: PopupModelLabels,
+  today: Date = new Date(),
+): PopupModel {
   const events = state.events
-    .map((event, index) => ({ event: createEventSummary(event, today), index }))
+    .map((event, index) => ({ event: createEventSummary(event, labels, today), index }))
     .sort(compareEventSummaryEntries)
     .map((entry) => entry.event);
 
   return {
-    title: "あとなんねる",
+    title: labels.title,
     featuredEvent: events[0] ?? null,
     events,
   };
 }
 
-export function createInitialPopupModel(): PopupModel {
-  return createPopupModel(createInitialAppState());
+export function createInitialPopupModel(labels: PopupModelLabels): PopupModel {
+  return createPopupModel(createInitialAppState(), labels);
 }
 
-function createEventSummary(event: CountSleepEvent, today: Date): EventSummary {
+function createEventSummary(event: CountSleepEvent, labels: PopupModelLabels, today: Date): EventSummary {
   const sleeps = calculateSleepsUntil(event.targetDate, today);
   const status = createEventStatus(sleeps);
 
@@ -47,9 +63,9 @@ function createEventSummary(event: CountSleepEvent, today: Date): EventSummary {
     emoji: event.emoji,
     targetDate: event.targetDate,
     sleeps,
-    sleepsLabel: createSleepsLabel(sleeps, status),
+    sleepsLabel: createSleepsLabel(sleeps, status, labels),
     status,
-    statusLabel: createStatusLabel(status),
+    statusLabel: createStatusLabel(status, labels),
   };
 }
 
@@ -102,27 +118,31 @@ function createEventStatus(sleeps: number | null): EventStatus {
   return sleeps < 0 ? "past" : "upcoming";
 }
 
-function createSleepsLabel(sleeps: number | null, status: EventStatus): string {
+function createSleepsLabel(
+  sleeps: number | null,
+  status: EventStatus,
+  labels: PopupModelLabels,
+): string {
   if (status === "today") {
-    return "きょうだよ!";
+    return labels.todaySleeps;
   }
 
   if (status === "past") {
-    return "完了";
+    return labels.pastSleeps;
   }
 
-  return sleeps === null ? "-- ねる" : `${sleeps} ねる`;
+  return sleeps === null ? labels.unknownSleeps : labels.sleepsCount(sleeps);
 }
 
-function createStatusLabel(status: EventStatus): string {
+function createStatusLabel(status: EventStatus, labels: PopupModelLabels): string {
   switch (status) {
     case "today":
-      return "きょう";
+      return labels.todayStatus;
     case "past":
-      return "完了";
+      return labels.pastStatus;
     case "unknown":
-      return "日付未確認";
+      return labels.unknownStatus;
     case "upcoming":
-      return "これから";
+      return labels.upcomingStatus;
   }
 }
