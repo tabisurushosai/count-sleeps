@@ -6,6 +6,7 @@ export interface EventSummary {
   name: string;
   emoji: string;
   targetDate: string;
+  sleeps: number | null;
   sleepsLabel: string;
   status: EventStatus;
   statusLabel: string;
@@ -20,7 +21,10 @@ export interface PopupModel {
 }
 
 export function createPopupModel(state: AppState, today: Date = new Date()): PopupModel {
-  const events = state.events.map((event) => createEventSummary(event, today));
+  const events = state.events
+    .map((event, index) => ({ event: createEventSummary(event, today), index }))
+    .sort(compareEventSummaryEntries)
+    .map((entry) => entry.event);
 
   return {
     title: "あとなんねる",
@@ -42,10 +46,48 @@ function createEventSummary(event: CountSleepEvent, today: Date): EventSummary {
     name: event.name,
     emoji: event.emoji,
     targetDate: event.targetDate,
+    sleeps,
     sleepsLabel: createSleepsLabel(sleeps, status),
     status,
     statusLabel: createStatusLabel(status),
   };
+}
+
+function compareEventSummaryEntries(
+  left: { event: EventSummary; index: number },
+  right: { event: EventSummary; index: number },
+): number {
+  return (
+    getSortRank(left.event) - getSortRank(right.event) ||
+    compareSleeps(left.event, right.event) ||
+    left.event.targetDate.localeCompare(right.event.targetDate) ||
+    left.index - right.index
+  );
+}
+
+function getSortRank(event: EventSummary): number {
+  switch (event.status) {
+    case "today":
+      return 0;
+    case "upcoming":
+      return 1;
+    case "past":
+      return 2;
+    case "unknown":
+      return 3;
+  }
+}
+
+function compareSleeps(left: EventSummary, right: EventSummary): number {
+  if (left.sleeps === null || right.sleeps === null) {
+    return 0;
+  }
+
+  if (left.status === "past" && right.status === "past") {
+    return right.sleeps - left.sleeps;
+  }
+
+  return left.sleeps - right.sleeps;
 }
 
 function createEventStatus(sleeps: number | null): EventStatus {
