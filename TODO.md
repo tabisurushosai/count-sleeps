@@ -5,7 +5,7 @@
 - [x] T003: 今日からの残り日数(ねる回数)を計算し大きく表示
 - [x] T004: 当日「きょうだよ!」演出、過去日は完了表示
 - [x] T005: 複数イベントを近い順に一覧表示
-- [ ] T006: 起動時に storage.local から全状態を復元
+- [x] T006: 起動時に storage.local から全状態を復元
 - [ ] T007: _locales ja/en を chrome.i18n で全UIに適用
 - [ ] T008: Premiumゲート(7日トライアル + Stripe Checkout URL)。無料はイベント3つ、Premiumで無制限+背景テーマ
 - [ ] T009: npm run build を通し ts/lint を解消
