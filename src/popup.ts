@@ -1,4 +1,15 @@
-import { createInitialPopupModel, type EventSummary, type PopupModel } from "./core/popupModel";
+import {
+  addEvent,
+  createInitialAppState,
+  findEvent,
+  removeEvent,
+  updateEvent,
+  type AppState,
+  type CountSleepEventInput,
+} from "./core/appState";
+import { loadAppState, saveAppState } from "./core/appPersistence";
+import { createPopupModel, type EventSummary, type PopupModel } from "./core/popupModel";
+import { store } from "./storage";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -6,13 +17,23 @@ if (!app) {
   throw new Error("#app is missing");
 }
 
-const model = createInitialPopupModel();
+const root = app;
 
-function renderPopup(root: HTMLElement, popupModel: PopupModel): void {
+interface UiState {
+  editingEventId: string | null;
+}
+
+let appState: AppState = createInitialAppState();
+let uiState: UiState = {
+  editingEventId: null,
+};
+
+function renderPopup(root: HTMLElement, popupModel: PopupModel, currentUiState: UiState): void {
   root.replaceChildren();
   root.append(
     createStyle(),
     createHeader(popupModel.title),
+    createEventForm(appState, currentUiState),
     createFeatured(popupModel.featuredEvent),
     createEventList(popupModel.events),
   );
@@ -57,6 +78,67 @@ function createStyle(): HTMLStyleElement {
       background: #fff;
     }
 
+    .event-form {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid #eadcc4;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .event-form__row {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 8px;
+    }
+
+    .event-form__label {
+      display: grid;
+      gap: 4px;
+      color: #5f6368;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .event-form__input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 34px;
+      padding: 7px 8px;
+      border: 1px solid #d8c7ab;
+      border-radius: 6px;
+      color: #202124;
+      background: #fff;
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .event-form__actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d8c7ab;
+      border-radius: 6px;
+      color: #202124;
+      background: #fff7e8;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .button--primary {
+      border-color: #d65f00;
+      color: #fff;
+      background: #d65f00;
+    }
+
     .featured__label {
       margin: 0;
       color: #5f6368;
@@ -95,7 +177,7 @@ function createStyle(): HTMLStyleElement {
     .event-item,
     .empty-state {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: auto 1fr auto auto;
       gap: 8px;
       align-items: center;
       min-height: 44px;
@@ -129,6 +211,25 @@ function createStyle(): HTMLStyleElement {
       white-space: nowrap;
     }
 
+    .event-item__actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .event-item__button {
+      min-width: 36px;
+      min-height: 28px;
+      padding: 0 7px;
+      border: 1px solid #d8c7ab;
+      border-radius: 6px;
+      background: #fff7e8;
+      color: #202124;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .empty-state {
       grid-template-columns: 1fr;
       color: #5f6368;
@@ -149,6 +250,80 @@ function createHeader(title: string): HTMLElement {
 
   shell.append(heading);
   return shell;
+}
+
+function createEventForm(state: AppState, currentUiState: UiState): HTMLElement {
+  const editingEvent = currentUiState.editingEventId ? findEvent(state, currentUiState.editingEventId) : null;
+  const form = document.createElement("form");
+  form.className = "event-form";
+
+  const row = document.createElement("div");
+  row.className = "event-form__row";
+
+  const emojiLabel = createFormLabel("絵文字");
+  const emojiInput = createInput("text", "emoji", "📅");
+  emojiInput.maxLength = 4;
+  emojiInput.value = editingEvent?.emoji ?? "";
+  emojiLabel.append(emojiInput);
+
+  const nameLabel = createFormLabel("名前");
+  const nameInput = createInput("text", "name", "たのしみな予定");
+  nameInput.required = true;
+  nameInput.value = editingEvent?.name ?? "";
+  nameLabel.append(nameInput);
+
+  row.append(emojiLabel, nameLabel);
+
+  const dateLabel = createFormLabel("日付");
+  const dateInput = createInput("date", "targetDate", "");
+  dateInput.required = true;
+  dateInput.value = editingEvent?.targetDate ?? "";
+  dateLabel.append(dateInput);
+
+  const actions = document.createElement("div");
+  actions.className = "event-form__actions";
+
+  if (editingEvent) {
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "button";
+    cancelButton.type = "button";
+    cancelButton.textContent = "キャンセル";
+    cancelButton.addEventListener("click", () => {
+      uiState = { editingEventId: null };
+      render();
+    });
+    actions.append(cancelButton);
+  }
+
+  const submitButton = document.createElement("button");
+  submitButton.className = "button button--primary";
+  submitButton.type = "submit";
+  submitButton.textContent = editingEvent ? "更新" : "追加";
+  actions.append(submitButton);
+
+  form.append(row, dateLabel, actions);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void saveForm(form, currentUiState.editingEventId);
+  });
+
+  return form;
+}
+
+function createFormLabel(text: string): HTMLLabelElement {
+  const label = document.createElement("label");
+  label.className = "event-form__label";
+  label.textContent = text;
+  return label;
+}
+
+function createInput(type: string, name: string, placeholder: string): HTMLInputElement {
+  const input = document.createElement("input");
+  input.className = "event-form__input";
+  input.type = type;
+  input.name = name;
+  input.placeholder = placeholder;
+  return input;
 }
 
 function createFeatured(event: EventSummary | null): HTMLElement {
@@ -216,9 +391,69 @@ function createEventItem(event: EventSummary): HTMLLIElement {
   sleeps.className = "event-item__sleeps";
   sleeps.textContent = event.sleepsLabel;
 
+  const actions = document.createElement("div");
+  actions.className = "event-item__actions";
+
+  const editButton = document.createElement("button");
+  editButton.className = "event-item__button";
+  editButton.type = "button";
+  editButton.textContent = "編集";
+  editButton.addEventListener("click", () => {
+    uiState = { editingEventId: event.id };
+    render();
+  });
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "event-item__button";
+  deleteButton.type = "button";
+  deleteButton.textContent = "削除";
+  deleteButton.addEventListener("click", () => {
+    void deleteEvent(event.id);
+  });
+
+  actions.append(editButton, deleteButton);
   detail.append(name, date);
-  item.append(emoji, detail, sleeps);
+  item.append(emoji, detail, sleeps, actions);
   return item;
 }
 
-renderPopup(app, model);
+function readFormInput(form: HTMLFormElement): CountSleepEventInput {
+  const formData = new FormData(form);
+  return {
+    name: String(formData.get("name") ?? ""),
+    emoji: String(formData.get("emoji") ?? ""),
+    targetDate: String(formData.get("targetDate") ?? ""),
+  };
+}
+
+async function saveForm(form: HTMLFormElement, editingEventId: string | null): Promise<void> {
+  const input = readFormInput(form);
+  appState = editingEventId
+    ? updateEvent(appState, editingEventId, input)
+    : addEvent(appState, input, createEventId());
+  uiState = { editingEventId: null };
+  await saveAppState(store, appState);
+  render();
+}
+
+async function deleteEvent(id: string): Promise<void> {
+  appState = removeEvent(appState, id);
+  uiState = { editingEventId: uiState.editingEventId === id ? null : uiState.editingEventId };
+  await saveAppState(store, appState);
+  render();
+}
+
+function createEventId(): string {
+  return crypto.randomUUID();
+}
+
+function render(): void {
+  renderPopup(root, createPopupModel(appState), uiState);
+}
+
+async function start(): Promise<void> {
+  appState = await loadAppState(store);
+  render();
+}
+
+void start();
