@@ -1,3 +1,5 @@
+import { createInitialAppState, type AppState, type CountSleepEvent } from "./appState";
+
 export interface EventSummary {
   id: string;
   name: string;
@@ -12,10 +14,26 @@ export interface PopupModel {
   events: EventSummary[];
 }
 
-export function createInitialPopupModel(): PopupModel {
+export function createPopupModel(state: AppState): PopupModel {
+  const events = state.events.map(createEventSummary);
+
   return {
     title: "あとなんねる",
-    featuredEvent: null,
-    events: [],
+    featuredEvent: events[0] ?? null,
+    events,
+  };
+}
+
+export function createInitialPopupModel(): PopupModel {
+  return createPopupModel(createInitialAppState());
+}
+
+function createEventSummary(event: CountSleepEvent): EventSummary {
+  return {
+    id: event.id,
+    name: event.name,
+    emoji: event.emoji,
+    targetDate: event.targetDate,
+    sleepsLabel: "-- ねる",
   };
 }
