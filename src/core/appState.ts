@@ -11,13 +11,27 @@ export interface CountSleepEventInput {
   targetDate: string;
 }
 
+export type BackgroundTheme = "sunrise" | "sky" | "forest";
+
+export interface PremiumState {
+  purchased: boolean;
+  trialStartedAt: string | null;
+}
+
 export interface AppState {
   events: CountSleepEvent[];
+  premium: PremiumState;
+  backgroundTheme: BackgroundTheme;
 }
 
 export function createInitialAppState(): AppState {
   return {
     events: [],
+    premium: {
+      purchased: false,
+      trialStartedAt: null,
+    },
+    backgroundTheme: "sunrise",
   };
 }
 
@@ -28,6 +42,8 @@ export function normalizeAppState(value: unknown): AppState {
 
   return {
     events: value.events.filter(isCountSleepEvent),
+    premium: normalizePremiumState(value.premium),
+    backgroundTheme: normalizeBackgroundTheme(value.backgroundTheme),
   };
 }
 
@@ -78,4 +94,19 @@ function isCountSleepEvent(value: unknown): value is CountSleepEvent {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function normalizePremiumState(value: unknown): PremiumState {
+  if (!isRecord(value)) {
+    return createInitialAppState().premium;
+  }
+
+  return {
+    purchased: value.purchased === true,
+    trialStartedAt: typeof value.trialStartedAt === "string" ? value.trialStartedAt : null,
+  };
+}
+
+function normalizeBackgroundTheme(value: unknown): BackgroundTheme {
+  return value === "sky" || value === "forest" || value === "sunrise" ? value : "sunrise";
 }

@@ -5,9 +5,16 @@ import {
   removeEvent,
   updateEvent,
   type AppState,
+  type BackgroundTheme,
   type CountSleepEventInput,
 } from "./core/appState";
 import { loadAppState, saveAppState } from "./core/appPersistence";
+import {
+  STRIPE_CHECKOUT_URL,
+  createPremiumAccess,
+  setBackgroundTheme,
+  startPremiumTrial,
+} from "./core/premium";
 import {
   createPopupModel,
   type EventSummary,
@@ -43,6 +50,18 @@ interface UiMessages {
   emptyEvents: string;
   editButton: string;
   deleteButton: string;
+  premiumHeading: string;
+  premiumFreeStatus: string;
+  premiumTrialStatus: (days: number) => string;
+  premiumPurchasedStatus: string;
+  premiumLimitNotice: (limit: number) => string;
+  premiumStartTrialButton: string;
+  premiumCheckoutButton: string;
+  themeLabel: string;
+  themeLocked: string;
+  themeSunrise: string;
+  themeSky: string;
+  themeForest: string;
 }
 
 const uiMessages = createUiMessages();
@@ -59,6 +78,7 @@ function renderPopup(root: HTMLElement, popupModel: PopupModel, currentUiState: 
   root.append(
     createStyle(),
     createHeader(popupModel.title),
+    createPremiumPanel(appState),
     createEventForm(appState, currentUiState),
     createFeatured(popupModel.featuredEvent),
     createEventList(popupModel.events),
@@ -91,6 +111,18 @@ function createUiMessages(): UiMessages {
     emptyEvents: message("emptyEvents"),
     editButton: message("editButton"),
     deleteButton: message("deleteButton"),
+    premiumHeading: message("premiumHeading"),
+    premiumFreeStatus: message("premiumFreeStatus"),
+    premiumTrialStatus: (days) => message("premiumTrialStatus", String(days)),
+    premiumPurchasedStatus: message("premiumPurchasedStatus"),
+    premiumLimitNotice: (limit) => message("premiumLimitNotice", String(limit)),
+    premiumStartTrialButton: message("premiumStartTrialButton"),
+    premiumCheckoutButton: message("premiumCheckoutButton"),
+    themeLabel: message("themeLabel"),
+    themeLocked: message("themeLocked"),
+    themeSunrise: message("themeSunrise"),
+    themeSky: message("themeSky"),
+    themeForest: message("themeForest"),
   };
 }
 
@@ -112,7 +144,7 @@ function createStyle(): HTMLStyleElement {
       margin: 0;
       padding: 14px;
       box-sizing: border-box;
-      background: #fffaf2;
+      background: var(--app-bg, #fffaf2);
     }
 
     #app,
@@ -137,8 +169,97 @@ function createStyle(): HTMLStyleElement {
       background: #fff;
     }
 
+    .theme-sunrise {
+      --app-bg: #fffaf2;
+      --featured-bg: #fff;
+      --accent: #d65f00;
+      --accent-soft: #ffd58a;
+    }
+
+    .theme-sky {
+      --app-bg: #eef7ff;
+      --featured-bg: #ffffff;
+      --accent: #1769aa;
+      --accent-soft: #a9d8ff;
+    }
+
+    .theme-forest {
+      --app-bg: #f2fbf4;
+      --featured-bg: #ffffff;
+      --accent: #2f7d4f;
+      --accent-soft: #aadfbd;
+    }
+
+    .premium-panel {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid #eadcc4;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .premium-panel__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .premium-panel__title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .premium-panel__status,
+    .premium-panel__notice {
+      margin: 0;
+      color: #5f6368;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .premium-panel__actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .premium-panel__link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid #d8c7ab;
+      border-radius: 6px;
+      color: #202124;
+      background: #fff7e8;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .theme-control {
+      display: grid;
+      gap: 4px;
+      color: #5f6368;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .theme-control__select {
+      min-height: 32px;
+      border: 1px solid #d8c7ab;
+      border-radius: 6px;
+      background: #fff;
+      color: #202124;
+      font: inherit;
+      font-size: 13px;
+    }
+
     .featured--today {
-      border-color: #d65f00;
+      border-color: var(--accent, #d65f00);
       background: #fff3dc;
       animation: today-pop 900ms ease-in-out both;
     }
@@ -204,9 +325,9 @@ function createStyle(): HTMLStyleElement {
     }
 
     .button--primary {
-      border-color: #d65f00;
+      border-color: var(--accent, #d65f00);
       color: #fff;
-      background: #d65f00;
+      background: var(--accent, #d65f00);
     }
 
     .featured__label {
@@ -220,7 +341,7 @@ function createStyle(): HTMLStyleElement {
       font-size: 44px;
       line-height: 1;
       font-weight: 800;
-      color: #d65f00;
+      color: var(--accent, #d65f00);
     }
 
     .featured--today .featured__count {
@@ -266,7 +387,7 @@ function createStyle(): HTMLStyleElement {
     }
 
     .event-item--today {
-      border-color: #d65f00;
+      border-color: var(--accent, #d65f00);
       background: #fff8ec;
     }
 
@@ -295,7 +416,7 @@ function createStyle(): HTMLStyleElement {
     .event-item__sleeps {
       font-size: 13px;
       font-weight: 700;
-      color: #d65f00;
+      color: var(--accent, #d65f00);
       white-space: nowrap;
     }
 
@@ -356,8 +477,106 @@ function createHeader(title: string): HTMLElement {
   return shell;
 }
 
+function createPremiumPanel(state: AppState): HTMLElement {
+  const access = createPremiumAccess(state);
+  const panel = document.createElement("section");
+  panel.className = "premium-panel";
+
+  const header = document.createElement("div");
+  header.className = "premium-panel__header";
+
+  const heading = document.createElement("h2");
+  heading.className = "premium-panel__title";
+  heading.textContent = uiMessages.premiumHeading;
+
+  const status = document.createElement("p");
+  status.className = "premium-panel__status";
+  status.textContent = state.premium.purchased
+    ? uiMessages.premiumPurchasedStatus
+    : access.isTrialActive
+      ? uiMessages.premiumTrialStatus(access.trialDaysRemaining)
+      : uiMessages.premiumFreeStatus;
+
+  header.append(heading, status);
+  panel.append(header);
+
+  if (!access.canAddEvent) {
+    const notice = document.createElement("p");
+    notice.className = "premium-panel__notice";
+    notice.textContent = uiMessages.premiumLimitNotice(access.eventLimit);
+    panel.append(notice);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "premium-panel__actions";
+
+  if (access.canStartTrial) {
+    const trialButton = document.createElement("button");
+    trialButton.className = "button";
+    trialButton.type = "button";
+    trialButton.textContent = uiMessages.premiumStartTrialButton;
+    trialButton.addEventListener("click", () => {
+      void startTrial();
+    });
+    actions.append(trialButton);
+  }
+
+  const checkoutLink = document.createElement("a");
+  checkoutLink.className = "premium-panel__link";
+  checkoutLink.href = STRIPE_CHECKOUT_URL;
+  checkoutLink.target = "_blank";
+  checkoutLink.rel = "noreferrer";
+  checkoutLink.textContent = uiMessages.premiumCheckoutButton;
+  actions.append(checkoutLink);
+
+  panel.append(actions, createThemeControl(state, access.isPremium));
+  return panel;
+}
+
+function createThemeControl(state: AppState, isPremium: boolean): HTMLElement {
+  const label = document.createElement("label");
+  label.className = "theme-control";
+  label.textContent = uiMessages.themeLabel;
+
+  const select = document.createElement("select");
+  select.className = "theme-control__select";
+  select.name = "backgroundTheme";
+  select.disabled = !isPremium;
+
+  const themes: Array<{ value: BackgroundTheme; label: string }> = [
+    { value: "sunrise", label: uiMessages.themeSunrise },
+    { value: "sky", label: uiMessages.themeSky },
+    { value: "forest", label: uiMessages.themeForest },
+  ];
+
+  select.append(...themes.map(createThemeOption));
+  select.value = isPremium ? state.backgroundTheme : "sunrise";
+  select.addEventListener("change", () => {
+    void changeTheme(select.value as BackgroundTheme);
+  });
+
+  label.append(select);
+
+  if (!isPremium) {
+    const locked = document.createElement("span");
+    locked.className = "premium-panel__notice";
+    locked.textContent = uiMessages.themeLocked;
+    label.append(locked);
+  }
+
+  return label;
+}
+
+function createThemeOption(theme: { value: BackgroundTheme; label: string }): HTMLOptionElement {
+  const option = document.createElement("option");
+  option.value = theme.value;
+  option.textContent = theme.label;
+  return option;
+}
+
 function createEventForm(state: AppState, currentUiState: UiState): HTMLElement {
   const editingEvent = currentUiState.editingEventId ? findEvent(state, currentUiState.editingEventId) : null;
+  const access = createPremiumAccess(state);
   const form = document.createElement("form");
   form.className = "event-form";
 
@@ -403,6 +622,7 @@ function createEventForm(state: AppState, currentUiState: UiState): HTMLElement 
   submitButton.className = "button button--primary";
   submitButton.type = "submit";
   submitButton.textContent = editingEvent ? uiMessages.updateButton : uiMessages.addButton;
+  submitButton.disabled = !editingEvent && !access.canAddEvent;
   actions.append(submitButton);
 
   form.append(row, dateLabel, actions);
@@ -537,11 +757,28 @@ function readFormInput(form: HTMLFormElement): CountSleepEventInput {
 }
 
 async function saveForm(form: HTMLFormElement, editingEventId: string | null): Promise<void> {
+  if (!editingEventId && !createPremiumAccess(appState).canAddEvent) {
+    render();
+    return;
+  }
+
   const input = readFormInput(form);
   appState = editingEventId
     ? updateEvent(appState, editingEventId, input)
     : addEvent(appState, input, createEventId());
   uiState = { editingEventId: null };
+  await saveAppState(store, appState);
+  render();
+}
+
+async function startTrial(): Promise<void> {
+  appState = startPremiumTrial(appState);
+  await saveAppState(store, appState);
+  render();
+}
+
+async function changeTheme(theme: BackgroundTheme): Promise<void> {
+  appState = setBackgroundTheme(appState, theme);
   await saveAppState(store, appState);
   render();
 }
@@ -558,6 +795,9 @@ function createEventId(): string {
 }
 
 function render(): void {
+  document.body.className = createPremiumAccess(appState).isPremium
+    ? `theme-${appState.backgroundTheme}`
+    : "theme-sunrise";
   renderPopup(root, createPopupModel(appState, uiMessages.popupModel), uiState);
 }
 

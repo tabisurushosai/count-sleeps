@@ -72,5 +72,51 @@
   },
   "deleteButton": {
     "message": "削除"
+  },
+  "premiumHeading": {
+    "message": "Premium"
+  },
+  "premiumFreeStatus": {
+    "message": "無料プラン"
+  },
+  "premiumTrialStatus": {
+    "message": "トライアル 残り $DAYS$ 日",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "premiumPurchasedStatus": {
+    "message": "Premium 有効"
+  },
+  "premiumLimitNotice": {
+    "message": "無料プランはイベント $LIMIT$ 件までです",
+    "placeholders": {
+      "limit": {
+        "content": "$1"
+      }
+    }
+  },
+  "premiumStartTrialButton": {
+    "message": "7日トライアル"
+  },
+  "premiumCheckoutButton": {
+    "message": "$3で購入"
+  },
+  "themeLabel": {
+    "message": "背景テーマ"
+  },
+  "themeLocked": {
+    "message": "Premiumで変更できます"
+  },
+  "themeSunrise": {
+    "message": "あさやけ"
+  },
+  "themeSky": {
+    "message": "そら"
+  },
+  "themeForest": {
+    "message": "もり"
   }
 }

@@ -72,5 +72,51 @@
   },
   "deleteButton": {
     "message": "Delete"
+  },
+  "premiumHeading": {
+    "message": "Premium"
+  },
+  "premiumFreeStatus": {
+    "message": "Free plan"
+  },
+  "premiumTrialStatus": {
+    "message": "Trial: $DAYS$ days left",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "premiumPurchasedStatus": {
+    "message": "Premium active"
+  },
+  "premiumLimitNotice": {
+    "message": "Free plan allows up to $LIMIT$ events",
+    "placeholders": {
+      "limit": {
+        "content": "$1"
+      }
+    }
+  },
+  "premiumStartTrialButton": {
+    "message": "7-day trial"
+  },
+  "premiumCheckoutButton": {
+    "message": "Buy for $3"
+  },
+  "themeLabel": {
+    "message": "Background theme"
+  },
+  "themeLocked": {
+    "message": "Available with Premium"
+  },
+  "themeSunrise": {
+    "message": "Sunrise"
+  },
+  "themeSky": {
+    "message": "Sky"
+  },
+  "themeForest": {
+    "message": "Forest"
   }
 }
