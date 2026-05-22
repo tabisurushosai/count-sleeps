@@ -78,6 +78,17 @@ function createStyle(): HTMLStyleElement {
       background: #fff;
     }
 
+    .featured--today {
+      border-color: #d65f00;
+      background: #fff3dc;
+      animation: today-pop 900ms ease-in-out both;
+    }
+
+    .featured--past {
+      border-color: #c9d7c5;
+      background: #f7fbf4;
+    }
+
     .event-form {
       display: grid;
       gap: 8px;
@@ -153,6 +164,14 @@ function createStyle(): HTMLStyleElement {
       color: #d65f00;
     }
 
+    .featured--today .featured__count {
+      color: #b94700;
+    }
+
+    .featured--past .featured__count {
+      color: #3d7a43;
+    }
+
     .featured__name {
       margin: 0;
       font-size: 14px;
@@ -187,6 +206,16 @@ function createStyle(): HTMLStyleElement {
       background: #fff;
     }
 
+    .event-item--today {
+      border-color: #d65f00;
+      background: #fff8ec;
+    }
+
+    .event-item--past {
+      border-color: #c9d7c5;
+      background: #f7fbf4;
+    }
+
     .event-item__emoji {
       font-size: 22px;
       line-height: 1;
@@ -209,6 +238,10 @@ function createStyle(): HTMLStyleElement {
       font-weight: 700;
       color: #d65f00;
       white-space: nowrap;
+    }
+
+    .event-item--past .event-item__sleeps {
+      color: #3d7a43;
     }
 
     .event-item__actions {
@@ -235,6 +268,18 @@ function createStyle(): HTMLStyleElement {
       color: #5f6368;
       font-size: 13px;
       line-height: 1.5;
+    }
+
+    @keyframes today-pop {
+      0% {
+        transform: scale(0.98);
+      }
+      55% {
+        transform: scale(1.02);
+      }
+      100% {
+        transform: scale(1);
+      }
     }
   `;
   return style;
@@ -329,10 +374,13 @@ function createInput(type: string, name: string, placeholder: string): HTMLInput
 function createFeatured(event: EventSummary | null): HTMLElement {
   const section = document.createElement("section");
   section.className = "featured";
+  if (event?.status === "today" || event?.status === "past") {
+    section.classList.add(`featured--${event.status}`);
+  }
 
   const label = document.createElement("p");
   label.className = "featured__label";
-  label.textContent = "いちばん近い予定";
+  label.textContent = event ? event.statusLabel : "いちばん近い予定";
 
   const count = document.createElement("p");
   count.className = "featured__count";
@@ -372,6 +420,9 @@ function createEventList(events: EventSummary[]): HTMLElement {
 function createEventItem(event: EventSummary): HTMLLIElement {
   const item = document.createElement("li");
   item.className = "event-item";
+  if (event.status === "today" || event.status === "past") {
+    item.classList.add(`event-item--${event.status}`);
+  }
 
   const emoji = document.createElement("span");
   emoji.className = "event-item__emoji";
